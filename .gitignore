@@ -1,3 +1,4 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -7,6 +8,16 @@ venv/
 ENV/
 .venv
 *.log
+
+# System
 .DS_Store
 
+# Sensitive config - NEVER commit!
 config/config.json
+config.json
+
+# Backup files that might contain sensitive data
+*.backup
+*.bak
+config/*.backup
+config/*.bak

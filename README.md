@@ -161,6 +161,40 @@ Edit `config/config.json`:
 python3 find_station.py "Alexanderplatz"
 ```
 
+## 🔒 Security
+
+**⚠️ IMPORTANT:** Your `config.json` reveals your home location through station names and walking times. Keep it secure!
+
+### Quick Security Setup
+
+```bash
+# Run security check
+./security_check.sh
+
+# Secure your config (done automatically by install_pi.sh)
+chmod 600 config/config.json
+chmod 700 config/
+```
+
+### Key Security Points
+
+1. **✅ config.json is git-ignored** - won't be committed
+2. **✅ Restrictive file permissions** - only you can read it  
+3. **✅ Not deployed by default** - must configure manually on Pi
+4. **❌ Never share config.json** - contains your location
+5. **❌ Don't screenshot station names** - reveals where you live
+
+**Read [SECURITY.md](SECURITY.md) for complete security guidance.**
+
+### Security Checklist
+
+- [ ] Run `./security_check.sh` 
+- [ ] Verify `config.json` permissions are 600
+- [ ] Confirm `git status` doesn't show `config.json`
+- [ ] Change default Pi password
+- [ ] Enable SSH key authentication
+- [ ] Keep Pi system updated
+
 ## 🎨 Color Coding
 
 The display uses colors to show timing relative to walking time:

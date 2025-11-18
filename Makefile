@@ -1,4 +1,4 @@
-.PHONY: help install test deploy ssh logs status restart stop validate find-station
+.PHONY: help install test deploy ssh logs status restart stop validate find-station security
 
 help:
 	@echo "🚊 BVG Abfahrtsmonitor - Make Commands"
@@ -8,6 +8,7 @@ help:
 	@echo "  make install        - Install Python dependencies locally"
 	@echo "  make test          - Test locally (windowed mode)"
 	@echo "  make validate      - Validate config.json"
+	@echo "  make security      - Run security check"
 	@echo "  make find-station  - Find station IDs (usage: make find-station STATION='name')"
 	@echo ""
 	@echo "Deployment Commands:"
@@ -30,6 +31,9 @@ test:
 
 validate:
 	python3 validate_config.py ./config/config.json
+
+security:
+	./security_check.sh
 
 find-station:
 	@if [ -z "$(STATION)" ]; then \

@@ -48,6 +48,12 @@ if [ ! -f "./config/config.json" ]; then
     echo "✏️  Please edit ./config/config.json with your station IDs"
 fi
 
+# Secure config file permissions (readable only by owner)
+echo "🔒 Securing config file permissions..."
+chmod 600 ./config/config.json
+chmod 700 ./config
+echo "✅ Config files secured (600 permissions)"
+
 # Add user to video group (for framebuffer access)
 echo "👤 Adding user to video group..."
 sudo usermod -a -G video $USER

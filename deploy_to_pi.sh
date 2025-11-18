@@ -26,7 +26,11 @@ echo ""
 # Copy files
 echo "📦 Copying files to Pi..."
 rsync -avz --exclude '.git' --exclude '__pycache__' --exclude '*.pyc' \
+    --exclude 'config/config.json' --exclude '*.backup' --exclude '*.bak' \
     ./ "$PI_HOST:$REMOTE_PATH/"
+
+echo "⚠️  Note: config.json NOT copied (contains sensitive location data)"
+echo "   You'll need to configure it manually on the Pi"
 
 echo ""
 echo "✅ Files copied successfully!"
