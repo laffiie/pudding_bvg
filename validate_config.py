@@ -40,6 +40,15 @@ def validate_config(config_path='config.json'):
                 warnings.append(f"Station {i}: 'name' fehlt (empfohlen)")
             if 'walkingTime' not in station:
                 warnings.append(f"Station {i}: 'walkingTime' fehlt (Standard: 0)")
+            
+            # excludeDirections prüfen (optional, pro Station)
+            if 'excludeDirections' in station:
+                if not isinstance(station['excludeDirections'], list):
+                    errors.append(f"Station {i}: 'excludeDirections' muss eine Liste sein")
+                elif len(station['excludeDirections']) > 0:
+                    for direction in station['excludeDirections']:
+                        if not isinstance(direction, str):
+                            errors.append(f"Station {i}: 'excludeDirections' Einträge müssen Strings sein")
     
     # refreshInterval prüfen
     if 'refreshInterval' in config:
@@ -77,6 +86,12 @@ def validate_config(config_path='config.json'):
         print("✅ Konfiguration ist valide!")
         print(f"\n📊 Zusammenfassung:")
         print(f"   - Stationen: {len(config['stations'])}")
+        
+        # Count stations with direction filters
+        stations_with_filters = sum(1 for s in config['stations'] if s.get('excludeDirections', []))
+        if stations_with_filters > 0:
+            print(f"   - Richtungs-Filter: {stations_with_filters} Station(en)")
+        
         print(f"   - Refresh: {config.get('refreshInterval', 15)}s")
         print(f"   - Linien-Filter: {len(config.get('displayLines', []))} Linien")
         print(f"   - Display: {config.get('displayWidth', 800)}x{config.get('displayHeight', 480)}")

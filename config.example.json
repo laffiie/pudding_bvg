@@ -1,14 +1,16 @@
 {
   "stations": [
     {
-      "id": "900000100001",
+      "id": "900100003",
       "name": "S+U Alexanderplatz",
-      "walkingTime": 3
+      "walkingTime": 3,
+      "excludeDirections": []
     },
     {
-      "id": "900000100002",
+      "id": "900100002",
       "name": "U Rosa-Luxemburg-Platz",
-      "walkingTime": 8
+      "walkingTime": 8,
+      "excludeDirections": []
     }
   ],
   "refreshInterval": 30,

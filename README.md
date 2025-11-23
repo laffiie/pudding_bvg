@@ -129,7 +129,8 @@ Edit `config/config.json`:
     {
       "id": "900131508",
       "name": "Friedrich-Engels-Str./Eichenstr.",
-      "walkingTime": 5
+      "walkingTime": 5,
+      "excludeDirections": []
     }
   ],
   "refreshInterval": 30,
@@ -147,6 +148,7 @@ Edit `config/config.json`:
 | Option | Description | Default |
 |--------|-------------|---------|
 | `stations` | List of stations to display | `[]` |
+| `stations[].excludeDirections` | Hide departures to these destinations (per station) | `[]` |
 | `refreshInterval` | Seconds between API updates | `30` |
 | `displayLines` | Filter specific lines (empty = all) | `[]` |
 | `maxDepartures` | Max departures per station | `6` |
@@ -160,6 +162,79 @@ Edit `config/config.json`:
 ```bash
 python3 find_station.py "Alexanderplatz"
 ```
+
+### Finding Direction Names
+
+To see what actual direction names the API returns for your station:
+
+```bash
+python3 show_directions.py
+# or
+python3 show_directions.py 900131508
+```
+
+This shows all lines and their destinations, helping you decide what to filter.
+
+### Filtering by Direction (Exclude Mode)
+
+Since the BVG API only provides **final destinations** (not intermediate stops), you can filter by **excluding** unwanted directions at each station:
+
+```json
+{
+  "stations": [
+    {
+      "id": "900131508",
+      "name": "Friedrich-Engels-Str./Eichenstr.",
+      "walkingTime": 5,
+      "excludeDirections": ["Rosenthal Nord"]
+    }
+  ]
+}
+```
+
+**How it works:**
+- Uses **case-insensitive partial matching** - "rosenthal" matches "Rosenthal Nord"
+- **Per-station filtering** - each station can have different filters
+- **Exclude mode** - hide specific directions, show everything else
+- Multiple keywords = hide departures matching **any** keyword
+- Empty array = show all directions
+
+**Example Use Cases:**
+
+1. **Show only city-bound trams (exclude outbound):**
+   ```json
+   {
+     "id": "900131508",
+     "excludeDirections": ["Rosenthal Nord"]
+   }
+   ```
+   This hides M1 trams going to Rosenthal Nord, showing only those heading towards the city center (S Hackescher Markt direction).
+
+2. **Different filters per station:**
+   ```json
+   {
+     "stations": [
+       {
+         "id": "900131508",
+         "excludeDirections": ["Rosenthal"]
+       },
+       {
+         "id": "900131526",
+         "excludeDirections": ["Hackescher"]
+       }
+     ]
+   }
+   ```
+   First station shows only city-bound, second shows only outbound.
+
+3. **Exclude multiple unwanted destinations:**
+   ```json
+   {
+     "excludeDirections": ["Rosenthal", "Wittenau", "Hermsdorf"]
+   }
+   ```
+
+💡 **Tip:** Run `python3 show_directions.py` first to see actual destination names, then add the ones you DON'T want to see!
 
 ## 🎨 Color Coding
 
