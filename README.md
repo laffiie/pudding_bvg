@@ -105,7 +105,8 @@ Edit `config/config.json`:
       "id": "900131508",
       "name": "Friedrich-Engels-Str./Eichenstr.",
       "walkingTime": 5,
-      "excludeDirections": []
+      "excludeDirections": [],
+      "lines": ["M1"]
     }
   ],
   "refreshInterval": 30,
@@ -124,8 +125,9 @@ Edit `config/config.json`:
 |--------|-------------|---------|
 | `stations` | List of stations to display | `[]` |
 | `stations[].excludeDirections` | Hide departures to these destinations (per station) | `[]` |
+| `stations[].lines` | Show only these lines (per station) | `[]` |
 | `refreshInterval` | Seconds between API updates | `30` |
-| `displayLines` | Filter specific lines (empty = all) | `[]` |
+| `displayLines` | Filter specific lines (global, empty = all) | `[]` |
 | `maxDepartures` | Max departures per station | `6` |
 | `displayWidth` | Screen width in pixels | `800` |
 | `displayHeight` | Screen height in pixels | `480` |
@@ -149,6 +151,24 @@ python3 show_directions.py 900131508
 ```
 
 This shows all lines and their destinations, helping you decide what to filter.
+
+### Filtering by Line (Per Station)
+
+You can also specify exactly which lines to show for each station:
+
+```json
+{
+  "stations": [
+    {
+      "id": "900131508",
+      "name": "Friedrich-Engels-Str./Eichenstr.",
+      "lines": ["M1", "247"]
+    }
+  ]
+}
+```
+
+This is useful if a station serves many lines (like Alexanderplatz) but you only care about specific ones.
 
 ### Filtering by Direction (Exclude Mode)
 

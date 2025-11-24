@@ -111,6 +111,11 @@ class AbfahrtMonitor:
                 if display_lines:
                     departures = [d for d in departures if d['line'] in display_lines]
                 
+                # Filtere nach Linien pro Station (falls angegeben)
+                station_lines = station.get('lines', [])
+                if station_lines:
+                    departures = [d for d in departures if d['line'] in station_lines]
+                
                 # Filtere nach ausgeschlossenen Richtungen (pro Station)
                 exclude_directions = station.get('excludeDirections', [])
                 if exclude_directions:

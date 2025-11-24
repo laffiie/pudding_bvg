@@ -4,13 +4,15 @@
       "id": "900131508",
       "name": "Friedrich-Engels-Str./Eichenstr.",
       "walkingTime": 5,
-      "excludeDirections": ["Rosenthal Nord"]
+      "excludeDirections": ["Rosenthal Nord"],
+      "lines": ["M1"]
     },
     {
       "id": "900131002",
       "name": "Heinrich-Böll-Str.",
       "walkingTime": 9,
-      "excludeDirections": ["Schildow, Kirche","Arkenberge"]
+      "excludeDirections": [],
+      "lines": []
     }
   ],
   "refreshInterval": 30,

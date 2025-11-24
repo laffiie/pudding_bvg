@@ -49,6 +49,15 @@ def validate_config(config_path='config.json'):
                     for direction in station['excludeDirections']:
                         if not isinstance(direction, str):
                             errors.append(f"Station {i}: 'excludeDirections' Einträge müssen Strings sein")
+            
+            # lines prüfen (optional, pro Station)
+            if 'lines' in station:
+                if not isinstance(station['lines'], list):
+                    errors.append(f"Station {i}: 'lines' muss eine Liste sein")
+                elif len(station['lines']) > 0:
+                    for line in station['lines']:
+                        if not isinstance(line, str):
+                            errors.append(f"Station {i}: 'lines' Einträge müssen Strings sein")
     
     # refreshInterval prüfen
     if 'refreshInterval' in config:
@@ -91,6 +100,11 @@ def validate_config(config_path='config.json'):
         stations_with_filters = sum(1 for s in config['stations'] if s.get('excludeDirections', []))
         if stations_with_filters > 0:
             print(f"   - Richtungs-Filter: {stations_with_filters} Station(en)")
+            
+        # Count stations with line filters
+        stations_with_line_filters = sum(1 for s in config['stations'] if s.get('lines', []))
+        if stations_with_line_filters > 0:
+            print(f"   - Linien-Filter (pro Station): {stations_with_line_filters} Station(en)")
         
         print(f"   - Refresh: {config.get('refreshInterval', 15)}s")
         print(f"   - Linien-Filter: {len(config.get('displayLines', []))} Linien")

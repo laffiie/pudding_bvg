@@ -4,13 +4,15 @@
       "id": "900100003",
       "name": "S+U Alexanderplatz",
       "walkingTime": 3,
-      "excludeDirections": []
+      "excludeDirections": [],
+      "lines": ["M4", "U2"]
     },
     {
       "id": "900100002",
       "name": "U Rosa-Luxemburg-Platz",
       "walkingTime": 8,
-      "excludeDirections": []
+      "excludeDirections": [],
+      "lines": []
     }
   ],
   "refreshInterval": 30,
