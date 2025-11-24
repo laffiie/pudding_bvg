@@ -48,7 +48,7 @@ WorkingDirectory=$WORKING_DIR
 Environment=DISPLAY=:0
 Environment=SDL_VIDEODRIVER=x11
 Environment=HOME=$ACTUAL_HOME
-ExecStart=/usr/bin/python3 $WORKING_DIR/main.py $WORKING_DIR/config/config.json
+ExecStart=$WORKING_DIR/.venv/bin/python3 $WORKING_DIR/main.py $WORKING_DIR/config/config.json
 Restart=always
 RestartSec=10
 
@@ -92,7 +92,7 @@ else
     echo "Troubleshooting:"
     echo "1. Check if python3 is installed: which python3"
     echo "2. Check if config exists: ls -l $WORKING_DIR/config/config.json"
-    echo "3. Try running manually: python3 $WORKING_DIR/main.py $WORKING_DIR/config/config.json"
+    echo "3. Try running manually: $WORKING_DIR/.venv/bin/python3 $WORKING_DIR/main.py $WORKING_DIR/config/config.json"
     exit 1
 fi
 

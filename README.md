@@ -287,7 +287,9 @@ sudo apt-get install -y \
     libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
     libfreetype6-dev libportmidi-dev libjpeg-dev unclutter
 
-# 3. Install Python packages
+# 3. Install Python packages (in virtual environment)
+python3 -m venv .venv
+source .venv/bin/activate
 pip3 install -r requirements.txt
 
 # 4. Add user to video group
@@ -321,7 +323,7 @@ User=USERNAME
 WorkingDirectory=/home/USERNAME/bvg_abfahrt
 Environment=DISPLAY=:0
 Environment=SDL_VIDEODRIVER=x11
-ExecStart=/usr/bin/python3 /home/USERNAME/bvg_abfahrt/main.py /home/USERNAME/bvg_abfahrt/config/config.json
+ExecStart=/home/USERNAME/bvg_abfahrt/.venv/bin/python3 /home/USERNAME/bvg_abfahrt/main.py /home/USERNAME/bvg_abfahrt/config/config.json
 Restart=always
 RestartSec=10
 
@@ -387,7 +389,7 @@ sudo journalctl -u bvg-display.service -n 50
 sudo journalctl -u bvg-display.service -f
 
 # Test manually
-python3 main.py ./config/config.json
+./.venv/bin/python3 main.py ./config/config.json
 ```
 
 ### Screen Goes Black
@@ -441,6 +443,8 @@ dpkg -l | grep libsdl2
 ### Local Testing
 ```bash
 # Install dependencies
+python3 -m venv .venv
+source .venv/bin/activate
 pip3 install -r requirements.txt
 
 # Test with example config

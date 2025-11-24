@@ -38,8 +38,15 @@ sudo apt-get install -y \
     unclutter
 
 # Install Python packages
-echo "🐍 Installing Python dependencies..."
-pip3 install -r requirements.txt
+echo "🐍 Setting up Python virtual environment..."
+if [ ! -d ".venv" ]; then
+    python3 -m venv .venv
+    echo "✅ Virtual environment created in .venv"
+fi
+
+echo "📦 Installing Python dependencies into virtual environment..."
+./.venv/bin/pip install --upgrade pip
+./.venv/bin/pip install -r requirements.txt
 
 # Check if config exists
 if [ ! -f "./config/config.json" ]; then
@@ -72,7 +79,7 @@ User=$ACTUAL_USER
 WorkingDirectory=$ACTUAL_PWD
 Environment=DISPLAY=:0
 Environment=SDL_VIDEODRIVER=x11
-ExecStart=/usr/bin/python3 $ACTUAL_PWD/main.py $ACTUAL_PWD/config/config.json
+ExecStart=$ACTUAL_PWD/.venv/bin/python3 $ACTUAL_PWD/main.py $ACTUAL_PWD/config/config.json
 Restart=always
 RestartSec=10
 
@@ -91,7 +98,7 @@ echo "✅ Installation complete!"
 echo ""
 echo "Next steps:"
 echo "1. Edit config: nano ./config/config.json"
-echo "2. Test manually: python3 main.py ./config/config.json"
+echo "2. Test manually: ./.venv/bin/python3 main.py ./config/config.json"
 echo "3. Enable auto-start: sudo systemctl enable bvg-display.service"
 echo "4. Start service: sudo systemctl start bvg-display.service"
 echo "5. Check status: sudo systemctl status bvg-display.service"
