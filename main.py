@@ -8,6 +8,7 @@ import json
 import time
 import logging
 import sys
+import subprocess
 from typing import Dict, List
 from pathlib import Path
 
@@ -46,6 +47,10 @@ class AbfahrtMonitor:
         
         self.display = DisplayManager(width, height, fullscreen, test_mode)
         self.running = True
+        self.screen_on = None  # Unbekannter Status zu Beginn
+        
+        # Stelle sicher, dass der Bildschirm an ist beim Start
+        self.set_screen_power(True)
         
     def _load_config(self, config_path: str) -> Dict:
         """Lädt die Konfiguration"""
@@ -70,6 +75,27 @@ class AbfahrtMonitor:
             logger.error(f"Fehler beim Laden der Konfiguration: {e}")
             sys.exit(1)
     
+    def set_screen_power(self, on: bool):
+        """Schaltet den Bildschirm an oder aus"""
+        if self.screen_on == on:
+            return
+
+        try:
+            cmd = ['xset', 'dpms', 'force', 'on' if on else 'off']
+            subprocess.run(cmd, check=True)
+            self.screen_on = on
+            logger.info(f"Bildschirm {'angeschaltet' if on else 'ausgeschaltet'}")
+        except (subprocess.SubprocessError, FileNotFoundError):
+            # Fallback für Systeme ohne xset (z.B. reines Framebuffer)
+            try:
+                # vcgencmd display_power 1/0 ist spezifisch für Raspberry Pi
+                cmd = ['vcgencmd', 'display_power', '1' if on else '0']
+                subprocess.run(cmd, check=True)
+                self.screen_on = on
+                logger.info(f"Bildschirm (via vcgencmd) {'angeschaltet' if on else 'ausgeschaltet'}")
+            except Exception as e:
+                logger.error(f"Konnte Bildschirm nicht steuern: {e}")
+
     def fetch_departures_for_stations(self) -> List[Dict]:
         """
         Holt Abfahrten für alle konfigurierten Stationen
@@ -167,6 +193,14 @@ class AbfahrtMonitor:
                     new_data = self.fetch_departures_for_stations()
                     if new_data:
                         stations_data = new_data
+                        
+                        # Bildschirm-Steuerung basierend auf verfügbaren Abfahrten
+                        total_departures = sum(len(s.get('departures', [])) for s in stations_data)
+                        if total_departures == 0:
+                            self.set_screen_power(False)
+                        else:
+                            self.set_screen_power(True)
+
                         self.display.is_live = True
                         self.display.last_update_time = current_time
                         logger.info("Daten erfolgreich aktualisiert")
@@ -196,6 +230,8 @@ class AbfahrtMonitor:
     def cleanup(self):
         """Räumt Ressourcen auf"""
         logger.info("Beende Abfahrtsmonitor")
+        # Bildschirm wieder anschalten beim Beenden
+        self.set_screen_power(True)
         self.display.quit()
 
 

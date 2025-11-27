@@ -4,15 +4,13 @@
       "id": "900131508",
       "name": "Friedrich-Engels-Str./Eichenstr.",
       "walkingTime": 5,
-      "excludeDirections": ["Rosenthal Nord"],
-      "lines": ["M1"]
+      "excludeDirections": ["Rosenthal Nord"]
     },
     {
-      "id": "900131002",
+      "id": "900131526",
       "name": "Heinrich-Böll-Str.",
       "walkingTime": 9,
-      "excludeDirections": [],
-      "lines": []
+      "excludeDirections": ["Schildow, Kirche","Arkenberge","Niederschönhausen, Pastor-Niemöller-Platz"]
     }
   ],
   "refreshInterval": 30,
