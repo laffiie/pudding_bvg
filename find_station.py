@@ -3,7 +3,9 @@
 Script zum Finden von BVG Stationscodes
 """
 import sys
-import requests
+import json
+import urllib.request
+import urllib.parse
 
 
 def search_station(query: str):
@@ -15,10 +17,10 @@ def search_station(query: str):
     }
     
     try:
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-        
-        locations = response.json()
+        full_url = f"{url}?{urllib.parse.urlencode(params)}"
+        req = urllib.request.Request(full_url, headers={'User-Agent': 'BVG-Abfahrt-Monitor/1.0'})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            locations = json.loads(resp.read().decode())
         
         if not locations:
             print(f"❌ Keine Stationen gefunden für: '{query}'")

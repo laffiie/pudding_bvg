@@ -8,7 +8,6 @@ from typing import List, Dict, Optional, Tuple
 from datetime import datetime
 import logging
 import time
-import math
 
 logger = logging.getLogger(__name__)
 
@@ -165,60 +164,18 @@ class DisplayManager:
         self.last_update_time = time.time()
     
     def _load_wifi_icon(self):
-        """Lädt das WiFi-Icon (animiert wenn möglich mit PIL, sonst statisch)"""
+        """Lädt das WiFi-Icon mit pygame"""
         import os
         wifi_path = os.path.join(os.path.dirname(__file__), 'Wifi.png')
         
-        # Versuche animiertes PNG mit PIL zu laden
-        try:
-            from PIL import Image
-            
-            if not os.path.exists(wifi_path):
-                logger.warning(f"WiFi-Icon nicht gefunden: {wifi_path}")
-                return
-                
-            pil_image = Image.open(wifi_path)
-            frame_count = 0
-            
-            # Lade alle Frames der Animation
-            try:
-                while True:
-                    pil_image.seek(frame_count)
-                    frame = pil_image.convert('RGBA' if pil_image.mode == 'RGBA' else 'RGB')
-                    
-                    # Konvertiere PIL Image zu pygame Surface
-                    data = frame.tobytes()
-                    wifi_surface = pygame.image.fromstring(data, frame.size, frame.mode)
-                    wifi_scaled = pygame.transform.smoothscale(wifi_surface, (ICON_SIZE, ICON_SIZE))
-                    self.wifi_frames.append(wifi_scaled)
-                    
-                    frame_count += 1
-            except EOFError:
-                logger.info(f"WiFi-Icon: {frame_count} Frames geladen")
-            
-            # Erstelle verdunkeltes Icon für Offline-Status
-            if self.wifi_frames:
-                self.wifi_icon_offline = self.wifi_frames[-1].copy()
-                self.wifi_icon_offline.fill((80, 80, 80, 255), special_flags=pygame.BLEND_RGB_MULT)
-                
-        except ImportError:
-            logger.warning("PIL/Pillow nicht installiert - lade statisches Icon mit pygame")
-            self._load_static_wifi_icon(wifi_path)
-        except Exception as e:
-            logger.warning(f"Fehler beim Laden des WiFi-Icons: {e}")
-            self._load_static_wifi_icon(wifi_path)
-    
-    def _load_static_wifi_icon(self, wifi_path: str):
-        """Lädt statisches WiFi-Icon als Fallback"""
         try:
             wifi_image = pygame.image.load(wifi_path)
             wifi_scaled = pygame.transform.smoothscale(wifi_image, (ICON_SIZE, ICON_SIZE))
             self.wifi_frames = [wifi_scaled]
             self.wifi_icon_offline = wifi_scaled.copy()
             self.wifi_icon_offline.fill((80, 80, 80), special_flags=pygame.BLEND_RGB_MULT)
-            logger.info("WiFi-Icon geladen (statisch)")
         except Exception as e:
-            logger.warning(f"Statisches WiFi-Icon konnte nicht geladen werden: {e}")
+            logger.warning(f"WiFi-Icon konnte nicht geladen werden: {e}")
     
     def _render_text_cached(self, text: str, font: pygame.font.Font, color: Tuple[int, int, int]) -> pygame.Surface:
         """

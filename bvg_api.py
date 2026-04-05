@@ -4,7 +4,10 @@ BVG API Client
 Wrapper für die BVG REST API v6 (https://v6.bvg.transport.rest)
 Holt Abfahrtszeiten und Störungsmeldungen.
 """
-import requests
+import json
+import urllib.request
+import urllib.parse
+import urllib.error
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 import logging
@@ -22,10 +25,15 @@ class BVGClient:
     """Client für die BVG REST API"""
     
     def __init__(self):
-        self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'BVG-Abfahrt-Monitor/1.0'
-        })
+        self.headers = {'User-Agent': 'BVG-Abfahrt-Monitor/1.0'}
+    
+    def _get(self, url: str, params: dict) -> dict:
+        """GET request mit urllib"""
+        query = urllib.parse.urlencode(params)
+        full_url = f"{url}?{query}"
+        req = urllib.request.Request(full_url, headers=self.headers)
+        with urllib.request.urlopen(req, timeout=API_TIMEOUT) as resp:
+            return json.loads(resp.read().decode())
     
     def get_departures(self, station_id: str, duration: int = DEFAULT_DURATION) -> List[Dict]:
         """
@@ -51,13 +59,11 @@ class BVGClient:
                 'remarks': 'true'
             }
             
-            response = self.session.get(url, params=params, timeout=API_TIMEOUT)
-            response.raise_for_status()
-            
-            departures = response.json().get('departures', [])
+            data = self._get(url, params)
+            departures = data.get('departures', [])
             return self._parse_departures(departures)
             
-        except requests.RequestException as e:
+        except urllib.error.URLError as e:
             logger.error(f"API-Fehler beim Abrufen der Abfahrten: {e}")
             return []
         except Exception as e:
@@ -81,10 +87,7 @@ class BVGClient:
             url = f"{API_BASE_URL}/stops/{station_id}"
             params = {'remarks': 'true'}
             
-            response = self.session.get(url, params=params, timeout=API_TIMEOUT)
-            response.raise_for_status()
-            
-            data = response.json()
+            data = self._get(url, params)
             remarks = data.get('remarks', [])
             
             # Filtere relevante Störungen
@@ -100,7 +103,7 @@ class BVGClient:
             
             return disruptions
             
-        except requests.RequestException as e:
+        except urllib.error.URLError as e:
             logger.error(f"API-Fehler beim Abrufen der Störungen: {e}")
             return []
         except Exception as e:

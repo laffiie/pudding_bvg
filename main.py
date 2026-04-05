@@ -80,7 +80,7 @@ class AbfahrtMonitor:
 
         try:
             cmd = ['xset', 'dpms', 'force', 'on' if on else 'off']
-            subprocess.run(cmd, check=True)
+            subprocess.run(cmd, check=True, capture_output=True)
             self.screen_on = on
             logger.info(f"Bildschirm {'angeschaltet' if on else 'ausgeschaltet'}")
         except (subprocess.SubprocessError, FileNotFoundError):
