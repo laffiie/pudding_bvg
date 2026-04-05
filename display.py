@@ -282,32 +282,82 @@ class DisplayManager:
         line_rect = line_surface.get_rect(centerx=x + size // 2, bottom=y + size - 4)
         screen.blit(line_surface, line_rect)
     
-    def _draw_warning_icon(self, screen: pygame.Surface, x: int, y: int, disruption: Dict):
+    def _draw_disruption_banner(self, x: int, y: int, disruptions: List[Dict],
+                                 max_width: int, station_index: int) -> int:
         """
-        Zeichnet ein Warnsymbol für Störungen
+        Zeichnet Störungsbanner für eine Station.
+        
+        Zeigt alle Störungen mit scrollendem Text bei langen Meldungen.
+        Rotiert zwischen Störungen wenn mehrere vorhanden.
         
         Args:
-            x, y: Position
-            disruption: Störungsdaten mit 'summary' und 'type'
+            x, y: Position (obere linke Ecke)
+            disruptions: Liste von Störungsdaten
+            max_width: Verfügbare Breite
+            station_index: Index der Station (für Scroll-Cache-Keys)
+            
+        Returns:
+            Neue Y-Position nach dem Banner
         """
-        # Orange runder Hintergrund
-        icon_size = 18
-        center_x = x + icon_size // 2
-        center_y = y + icon_size // 2
-        
-        pygame.draw.circle(screen, self.ORANGE, (center_x, center_y), icon_size // 2)
-        
-        # Warnsymbol "!" in weiß
-        warning_symbol = self.font_small.render('!', True, self.WHITE)
-        symbol_rect = warning_symbol.get_rect(center=(center_x, center_y))
-        screen.blit(warning_symbol, symbol_rect)
-        
-        # Kurzer Störungstitel daneben (kompakt)
-        summary = disruption.get('summary', 'Störung')
-        # Kürze auf 25 Zeichen
-        summary_short = summary[:25] + '...' if len(summary) > 25 else summary
-        disruption_text = self.font_tiny.render(summary_short, True, self.ORANGE)
-        screen.blit(disruption_text, (x + icon_size + 5, y + 2))
+        if not disruptions:
+            return y
+
+        BANNER_HEIGHT = 22
+        ICON_SIZE = 16
+        TEXT_PADDING = 6
+        MAX_DISRUPTIONS = 3  # Maximal angezeigte Störungen
+
+        # Rotiere bei >MAX_DISRUPTIONS: zeige immer nur MAX_DISRUPTIONS, Auswahl wechselt
+        visible = disruptions[:MAX_DISRUPTIONS]
+        if len(disruptions) > MAX_DISRUPTIONS:
+            cycle_period = 5  # Sekunden pro Rotation
+            offset = int(time.time() / cycle_period) % len(disruptions)
+            visible = [disruptions[(offset + i) % len(disruptions)] for i in range(MAX_DISRUPTIONS)]
+
+        for idx, disruption in enumerate(visible):
+            row_y = y + idx * (BANNER_HEIGHT + 2)
+            summary = disruption.get('summary', 'Störung')
+            dtype = disruption.get('type', 'warning')
+
+            # Hintergrundfarbe je nach Typ
+            bg_color = (60, 40, 0) if dtype == 'warning' else (40, 40, 20)
+            banner_rect = pygame.Rect(x, row_y, max_width, BANNER_HEIGHT)
+            pygame.draw.rect(self.screen, bg_color, banner_rect, border_radius=4)
+
+            # "!" Icon
+            icon_x = x + TEXT_PADDING
+            icon_center_y = row_y + BANNER_HEIGHT // 2
+            pygame.draw.circle(self.screen, self.ORANGE, (icon_x + ICON_SIZE // 2, icon_center_y), ICON_SIZE // 2)
+            icon_text = self.font_tiny.render('!', True, self.WHITE)
+            icon_rect = icon_text.get_rect(center=(icon_x + ICON_SIZE // 2, icon_center_y))
+            self.screen.blit(icon_text, icon_rect)
+
+            # Scrollender Störungstext
+            text_x = icon_x + ICON_SIZE + TEXT_PADDING
+            text_max_width = max_width - ICON_SIZE - TEXT_PADDING * 3
+            scroll_key = f"disruption_{station_index}_{idx}_{summary[:20]}"
+
+            if scroll_key not in self.scrolling_texts or self.scrolling_texts[scroll_key].text != summary:
+                self.scrolling_texts[scroll_key] = ScrollingText(
+                    summary, self.font_small, text_max_width, self.ORANGE
+                )
+
+            scroller = self.scrolling_texts[scroll_key]
+            scroller.update()
+            scroller.draw(self.screen, text_x, row_y + 3)
+
+        total_height = len(visible) * (BANNER_HEIGHT + 2)
+
+        # Hinweis wenn mehr Störungen vorhanden
+        if len(disruptions) > MAX_DISRUPTIONS:
+            hint_y = y + total_height
+            count_text = self._render_text_cached(
+                f'+{len(disruptions) - MAX_DISRUPTIONS} weitere', self.font_tiny, self.GRAY
+            )
+            self.screen.blit(count_text, (x + TEXT_PADDING, hint_y))
+            total_height += 16
+
+        return y + total_height + 4
     
     def _draw_legend(self):
         """Zeichnet die Farblegende am unteren Rand"""
@@ -438,12 +488,15 @@ class DisplayManager:
             walk_text = self.font_tiny.render(f'🚶 {walking_time} min', True, self.GRAY)
             self.screen.blit(walk_text, (x_offset + 15, y_offset + 28))
             
-            # Warnsymbol bei Störungen (unter dem Namen)
+            # Störungsbanner (unter dem Namen)
             if disruptions:
-                self._draw_warning_icon(self.screen, x_offset + 15, y_offset + 45, disruptions[0])
-                y_offset += 25  # Extra Platz für Warnung
-            
-            y_offset += 60
+                y_offset = self._draw_disruption_banner(
+                    x_offset + 10, y_offset + 45,
+                    disruptions, column_width - 20, i
+                )
+                y_offset += 15
+            else:
+                y_offset += 45
             
             # "Abfahrt in:" Label (rechtsbündig über den Zeitangaben, etwas nach links verschoben)
             abfahrt_label = self._render_text_cached('Abfahrt in:', self.font_tiny, self.GRAY)

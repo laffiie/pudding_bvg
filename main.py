@@ -1,6 +1,5 @@
 """
-BVG Abfahrtsmonitor - Hauptprogramm
-
+BVG Abfahrtsmonitor - Main
 Zeigt Echtzeit-Abfahrtszeiten von 1-2 BVG-Stationen auf einem Display.
 Unterstützt Fußweg-Berechnung, Störungsmeldungen und Verspätungen.
 """
@@ -22,7 +21,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Konstanten
 DEFAULT_REFRESH_INTERVAL = 15  # Sekunden
 MAX_OFFLINE_TIME = 120  # Sekunden bis "Offline"-Status
 TARGET_FPS = 5  # Frames pro Sekunde (reicht für Textanzeige)
@@ -118,7 +116,6 @@ class AbfahrtMonitor:
                 departures = self.bvg_client.get_departures(station_id)
                 disruptions = self.bvg_client.get_disruptions(station_id)
                 
-                # Test-Modus: Füge künstliche Störungen hinzu
                 if self.config.get('testMode', False):
                     if i == 0:  # Erste Station
                         disruptions = [{

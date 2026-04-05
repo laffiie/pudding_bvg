@@ -9,4 +9,4 @@ ENV/
 *.log
 .DS_Store
 
-config/config.json
+config/*.json

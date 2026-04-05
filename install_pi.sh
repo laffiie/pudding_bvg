@@ -35,6 +35,9 @@ sudo apt-get install -y \
     libfreetype6-dev \
     libportmidi-dev \
     libjpeg-dev \
+    fonts-liberation \
+    fonts-dejavu \
+    fonts-noto \
     unclutter
 
 # Install Python packages
