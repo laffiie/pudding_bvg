@@ -164,30 +164,30 @@ class DisplayManager:
         self.last_update_time = time.time()
     
     def _load_wifi_icon(self):
-        """Lädt das WiFi-Icon mit pygame und generiert Reveal-Animation (unten nach oben)"""
+        """Lädt das WiFi-Icon; extrahiert APNG-Frames via Pillow falls vorhanden"""
         import os
         wifi_path = os.path.join(os.path.dirname(__file__), 'Wifi.png')
 
         try:
-            wifi_image = pygame.image.load(wifi_path).convert_alpha()
-            wifi_scaled = pygame.transform.smoothscale(wifi_image, (ICON_SIZE, ICON_SIZE))
+            from PIL import Image as PilImage
+            import io
 
-            # Offline-Version (graues Icon)
-            self.wifi_icon_offline = wifi_scaled.copy()
+            pil_img = PilImage.open(wifi_path)
+            self.wifi_frames = []
+
+            for frame_index in range(getattr(pil_img, 'n_frames', 1)):
+                pil_img.seek(frame_index)
+                frame_rgba = pil_img.convert('RGBA')
+                frame_bytes = frame_rgba.tobytes()
+                w, h = frame_rgba.size
+                surface = pygame.image.frombuffer(frame_bytes, (w, h), 'RGBA').convert_alpha()
+                scaled = pygame.transform.smoothscale(surface, (ICON_SIZE, ICON_SIZE))
+                self.wifi_frames.append(scaled)
+
+            # Offline-Version: erstes Frame in Grau
+            self.wifi_icon_offline = self.wifi_frames[0].copy()
             self.wifi_icon_offline.fill((80, 80, 80), special_flags=pygame.BLEND_RGB_MULT)
 
-            # Reveal-Animation: 8 Frames, progressiv von unten nach oben aufdeckend
-            # Simuliert "Signal-Balken füllen sich auf"
-            num_frames = 8
-            self.wifi_frames = []
-            for i in range(num_frames):
-                frame = pygame.Surface((ICON_SIZE, ICON_SIZE), pygame.SRCALPHA)
-                reveal_height = max(1, int((i + 1) * ICON_SIZE / num_frames))
-                reveal_y = ICON_SIZE - reveal_height
-                frame.set_clip(pygame.Rect(0, reveal_y, ICON_SIZE, reveal_height))
-                frame.blit(wifi_scaled, (0, 0))
-                frame.set_clip(None)
-                self.wifi_frames.append(frame)
         except Exception as e:
             logger.warning(f"WiFi-Icon konnte nicht geladen werden: {e}")
     
