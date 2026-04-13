@@ -38,6 +38,7 @@ sudo apt-get install -y \
     fonts-liberation \
     fonts-dejavu \
     fonts-noto \
+    fonts-noto-color-emoji \
     unclutter
 
 # Install Python packages

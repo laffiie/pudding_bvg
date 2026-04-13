@@ -140,7 +140,11 @@ class DisplayManager:
             self.font_tiny = pygame.font.Font(None, 14)
         
         self.clock = pygame.time.Clock()
-        
+
+        # Emoji-Schrift (für Pudding + Fußweg-Icon)
+        self.emoji_font_small = self._init_emoji_font(18)
+        self.emoji_font_tiny = self._init_emoji_font(14)
+
         # WiFi-Animation Setup
         self.wifi_frames = []
         self.wifi_icon_offline = None
@@ -163,6 +167,29 @@ class DisplayManager:
         self.is_live = True
         self.last_update_time = time.time()
     
+    def _init_emoji_font(self, size: int) -> Optional[pygame.font.Font]:
+        """Sucht eine emoji-fähige Schrift; gibt None zurück wenn keine gefunden."""
+        candidates = ['notocoloremoji', 'noto color emoji', 'notoemoji', 'symbola']
+        for name in candidates:
+            path = pygame.font.match_font(name)
+            if path:
+                try:
+                    return pygame.font.Font(path, size)
+                except Exception:
+                    pass
+        return None
+
+    def _render_emoji(self, emoji: str, font: Optional[pygame.font.Font],
+                      fallback_text: str, fallback_font: pygame.font.Font,
+                      color: Tuple[int, int, int]) -> pygame.Surface:
+        """Rendert ein Emoji mit emoji_font; fällt auf fallback_text zurück."""
+        if font is not None:
+            try:
+                return font.render(emoji, True, color)
+            except Exception:
+                pass
+        return fallback_font.render(fallback_text, True, color)
+
     def _load_wifi_icon(self):
         """Lädt das WiFi-Icon; extrahiert APNG-Frames via Pillow falls vorhanden"""
         import os
@@ -379,8 +406,12 @@ class DisplayManager:
             self.last_blink = current_time
         
         # Header
+        pudding = self._render_emoji('🍮', self.emoji_font_small, '', self.font_small, self.LIGHT_GRAY)
+        pudding_w = pudding.get_width() + 6 if pudding.get_width() > 2 else 0
+        if pudding_w:
+            self.screen.blit(pudding, (20, 10))
         title = self._render_text_cached('BVG Abfahrten', self.font_small, self.LIGHT_GRAY)
-        self.screen.blit(title, (20, 10))
+        self.screen.blit(title, (20 + pudding_w, 10))
         
         # Test-Modus Indikator (neben dem Titel)
         if self.test_mode:
@@ -456,7 +487,12 @@ class DisplayManager:
             self.screen.blit(header_text, (x_offset + 15, y_offset))
             
             # Fußweg-Info (klein und grau)
-            walk_text = self.font_tiny.render(f'🚶 {walking_time} min', True, self.GRAY)
+            walk_icon = self._render_emoji('🚶', self.emoji_font_tiny, '→', self.font_tiny, self.GRAY)
+            walk_label = self.font_tiny.render(f' {walking_time} min', True, self.GRAY)
+            walk_surf = pygame.Surface((walk_icon.get_width() + walk_label.get_width(), walk_label.get_height()), pygame.SRCALPHA)
+            walk_surf.blit(walk_icon, (0, 0))
+            walk_surf.blit(walk_label, (walk_icon.get_width(), 0))
+            walk_text = walk_surf
             self.screen.blit(walk_text, (x_offset + 15, y_offset + 28))
             
             # Störungsbanner (unter dem Namen)
