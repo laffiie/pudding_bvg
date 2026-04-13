@@ -68,6 +68,7 @@ echo "⚙️  Creating systemd service..."
 ACTUAL_USER=$(whoami)
 ACTUAL_HOME=$(eval echo ~$ACTUAL_USER)
 ACTUAL_PWD=$PWD
+ACTUAL_UID=$(id -u $ACTUAL_USER)
 
 SERVICE_FILE="/etc/systemd/system/bvg-display.service"
 sudo tee $SERVICE_FILE > /dev/null <<EOF
@@ -80,8 +81,8 @@ Wants=network-online.target
 Type=simple
 User=$ACTUAL_USER
 WorkingDirectory=$ACTUAL_PWD
-Environment=DISPLAY=:0
-Environment=SDL_VIDEODRIVER=x11
+Environment=SDL_VIDEODRIVER=kmsdrm
+Environment=XDG_RUNTIME_DIR=/run/user/$ACTUAL_UID
 ExecStart=$ACTUAL_PWD/.venv/bin/python3 $ACTUAL_PWD/main.py $ACTUAL_PWD/config/config.json
 Restart=always
 RestartSec=10

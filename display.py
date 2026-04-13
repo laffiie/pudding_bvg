@@ -20,7 +20,7 @@ TARGET_FPS = 5  # Frames pro Sekunde
 SCROLL_SPEED = 3  # Pixel pro Frame (angepasst für 5 FPS)
 SCROLL_PAUSE_FRAMES = 15  # 3 Sekunden bei 5 FPS
 BLINK_INTERVAL = 0.5  # Sekunden
-WIFI_ANIMATION_SPEED = 1  # Frames pro Animation-Frame (angepasst für 5 FPS)
+WIFI_ANIMATION_SPEED = 3  # Frames pro Animation-Frame → ~5s Puls-Zyklus bei 5 FPS
 
 
 class ScrollingText:
@@ -121,7 +121,7 @@ class DisplayManager:
         self.height = height
         self.test_mode = test_mode
         
-        flags = pygame.FULLSCREEN if fullscreen else 0
+        flags = pygame.FULLSCREEN | pygame.DOUBLEBUF if fullscreen else pygame.DOUBLEBUF
         self.screen = pygame.display.set_mode((width, height), flags)
         pygame.display.set_caption('BVG Abfahrtsmonitor')
         
@@ -164,16 +164,25 @@ class DisplayManager:
         self.last_update_time = time.time()
     
     def _load_wifi_icon(self):
-        """Lädt das WiFi-Icon mit pygame"""
+        """Lädt das WiFi-Icon mit pygame und generiert Pulse-Animation"""
         import os
         wifi_path = os.path.join(os.path.dirname(__file__), 'Wifi.png')
         
         try:
-            wifi_image = pygame.image.load(wifi_path)
+            wifi_image = pygame.image.load(wifi_path).convert_alpha()
             wifi_scaled = pygame.transform.smoothscale(wifi_image, (ICON_SIZE, ICON_SIZE))
-            self.wifi_frames = [wifi_scaled]
+
+            # Offline-Version (graues Icon)
             self.wifi_icon_offline = wifi_scaled.copy()
             self.wifi_icon_offline.fill((80, 80, 80), special_flags=pygame.BLEND_RGB_MULT)
+
+            # Pulsing animation: 8 frames mit variierender Helligkeit
+            brightness_steps = [255, 210, 160, 120, 100, 120, 160, 210]
+            self.wifi_frames = []
+            for brightness in brightness_steps:
+                frame = wifi_scaled.copy()
+                frame.fill((brightness, brightness, brightness), special_flags=pygame.BLEND_RGB_MULT)
+                self.wifi_frames.append(frame)
         except Exception as e:
             logger.warning(f"WiFi-Icon konnte nicht geladen werden: {e}")
     
