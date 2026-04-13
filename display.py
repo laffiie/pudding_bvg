@@ -115,14 +115,12 @@ class DisplayManager:
             fullscreen: Vollbildmodus
             test_mode: Test-Modus aktiviert
         """
-        pygame.init()
-        
         self.width = width
         self.height = height
         self.test_mode = test_mode
-        
+
         flags = pygame.FULLSCREEN | pygame.DOUBLEBUF if fullscreen else pygame.DOUBLEBUF
-        self.screen = pygame.display.set_mode((width, height), flags)
+        self.screen = self._init_display(width, height, flags)
         pygame.display.set_caption('BVG Abfahrtsmonitor')
         
         # Schriften
@@ -167,6 +165,32 @@ class DisplayManager:
         self.is_live = True
         self.last_update_time = time.time()
     
+    def _init_display(self, width: int, height: int, flags: int) -> pygame.Surface:
+        """Versucht SDL-Videotreiber in Reihenfolge; bricht erst ab wenn keiner klappt."""
+        drivers = ['wayland', 'kmsdrm', 'fbdev', 'offscreen']
+        # Wenn SDL_VIDEODRIVER bereits gesetzt ist, diesen zuerst probieren
+        import os
+        env_driver = os.environ.get('SDL_VIDEODRIVER')
+        if env_driver and env_driver not in drivers:
+            drivers.insert(0, env_driver)
+        elif env_driver:
+            drivers.insert(0, drivers.pop(drivers.index(env_driver)))
+
+        last_error = None
+        for driver in drivers:
+            os.environ['SDL_VIDEODRIVER'] = driver
+            try:
+                pygame.init()
+                screen = pygame.display.set_mode((width, height), flags)
+                logger.info(f"Display initialisiert mit SDL_VIDEODRIVER={driver}")
+                return screen
+            except Exception as e:
+                last_error = e
+                logger.warning(f"SDL_VIDEODRIVER={driver} nicht verfügbar: {e}")
+                pygame.quit()
+
+        raise RuntimeError(f"Kein SDL-Videotreiber verfügbar. Letzter Fehler: {last_error}")
+
     def _init_emoji_font(self, size: int) -> Optional[pygame.font.Font]:
         """Sucht eine emoji-fähige Schrift; gibt None zurück wenn keine gefunden."""
         candidates = ['notocoloremoji', 'noto color emoji', 'notoemoji', 'symbola']
@@ -487,13 +511,11 @@ class DisplayManager:
             self.screen.blit(header_text, (x_offset + 15, y_offset))
             
             # Fußweg-Info (klein und grau)
-            walk_icon = self._render_emoji('🚶', self.emoji_font_tiny, '→', self.font_tiny, self.GRAY)
-            walk_label = self.font_tiny.render(f' {walking_time} min', True, self.GRAY)
-            walk_surf = pygame.Surface((walk_icon.get_width() + walk_label.get_width(), walk_label.get_height()), pygame.SRCALPHA)
-            walk_surf.blit(walk_icon, (0, 0))
-            walk_surf.blit(walk_label, (walk_icon.get_width(), 0))
-            walk_text = walk_surf
-            self.screen.blit(walk_text, (x_offset + 15, y_offset + 28))
+            walk_icon = self._render_emoji('🚶', self.emoji_font_tiny, '', self.font_tiny, self.GRAY)
+            walk_label = self.font_tiny.render(f'{walking_time} min', True, self.GRAY)
+            icon_w = walk_icon.get_width() + (4 if walk_icon.get_width() > 2 else 0)
+            self.screen.blit(walk_icon, (x_offset + 15, y_offset + 28))
+            self.screen.blit(walk_label, (x_offset + 15 + icon_w, y_offset + 28))
             
             # Störungsbanner (unter dem Namen)
             if disruptions:

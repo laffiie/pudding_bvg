@@ -38,7 +38,7 @@ sudo apt-get install -y \
     fonts-liberation \
     fonts-dejavu \
     fonts-noto \
-    fonts-noto-color-emoji \
+    Environment=SDL_VIDEODRIVER=kmsdrm    fonts-noto-color-emoji \
     unclutter
 
 # Install Python packages
@@ -81,8 +81,10 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=$ACTUAL_USER
+SupplementaryGroups=video
 WorkingDirectory=$ACTUAL_PWD
-Environment=SDL_VIDEODRIVER=kmsdrm
+Environment=SDL_VIDEODRIVER=wayland
+Environment=WAYLAND_DISPLAY=wayland-1
 Environment=XDG_RUNTIME_DIR=/run/user/$ACTUAL_UID
 ExecStart=$ACTUAL_PWD/.venv/bin/python3 $ACTUAL_PWD/main.py $ACTUAL_PWD/config/config.json
 Restart=always
