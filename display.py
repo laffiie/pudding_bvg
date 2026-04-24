@@ -119,7 +119,7 @@ class DisplayManager:
         self.height = height
         self.test_mode = test_mode
 
-        flags = pygame.FULLSCREEN | pygame.DOUBLEBUF if fullscreen else pygame.DOUBLEBUF
+        flags = pygame.FULLSCREEN if fullscreen else 0
         self.screen = self._init_display(width, height, flags)
         pygame.display.set_caption('BVG Abfahrtsmonitor')
         
@@ -166,30 +166,30 @@ class DisplayManager:
         self.last_update_time = time.time()
     
     def _init_display(self, width: int, height: int, flags: int) -> pygame.Surface:
-        """Versucht SDL-Videotreiber in Reihenfolge; bricht erst ab wenn keiner klappt."""
-        drivers = ['wayland', 'kmsdrm', 'fbdev', 'offscreen']
-        # Wenn SDL_VIDEODRIVER bereits gesetzt ist, diesen zuerst probieren
+        """Initialisiert pygame Display. Versucht den gesetzten Treiber, dann SDL-Autoerkennung."""
         import os
-        env_driver = os.environ.get('SDL_VIDEODRIVER')
-        if env_driver and env_driver not in drivers:
-            drivers.insert(0, env_driver)
-        elif env_driver:
-            drivers.insert(0, drivers.pop(drivers.index(env_driver)))
 
-        last_error = None
-        for driver in drivers:
-            os.environ['SDL_VIDEODRIVER'] = driver
-            try:
-                pygame.init()
-                screen = pygame.display.set_mode((width, height), flags)
-                logger.info(f"Display initialisiert mit SDL_VIDEODRIVER={driver}")
-                return screen
-            except Exception as e:
-                last_error = e
-                logger.warning(f"SDL_VIDEODRIVER={driver} nicht verfügbar: {e}")
-                pygame.quit()
+        # Erster Versuch: mit gesetztem SDL_VIDEODRIVER (aus Environment)
+        try:
+            pygame.init()
+            screen = pygame.display.set_mode((width, height), flags)
+            driver = os.environ.get('SDL_VIDEODRIVER', 'auto')
+            logger.info(f"Display initialisiert mit SDL_VIDEODRIVER={driver}")
+            return screen
+        except Exception as e:
+            logger.warning(f"Display-Init fehlgeschlagen: {e}")
+            pygame.quit()
 
-        raise RuntimeError(f"Kein SDL-Videotreiber verfügbar. Letzter Fehler: {last_error}")
+        # Zweiter Versuch: SDL selbst entscheiden lassen
+        os.environ.pop('SDL_VIDEODRIVER', None)
+        try:
+            pygame.init()
+            screen = pygame.display.set_mode((width, height), flags)
+            logger.info("Display initialisiert mit SDL-Autoerkennung")
+            return screen
+        except Exception as e:
+            pygame.quit()
+            raise RuntimeError(f"Kein SDL-Videotreiber verfügbar: {e}")
 
     def _init_emoji_font(self, size: int) -> Optional[pygame.font.Font]:
         """Sucht eine emoji-fähige Schrift; gibt None zurück wenn keine gefunden."""
@@ -206,10 +206,16 @@ class DisplayManager:
     def _render_emoji(self, emoji: str, font: Optional[pygame.font.Font],
                       fallback_text: str, fallback_font: pygame.font.Font,
                       color: Tuple[int, int, int]) -> pygame.Surface:
-        """Rendert ein Emoji mit emoji_font; fällt auf fallback_text zurück."""
+        """Rendert ein Emoji mit emoji_font, skaliert auf Texthöhe der fallback_font."""
         if font is not None:
             try:
-                return font.render(emoji, True, color)
+                surface = font.render(emoji, True, color)
+                target_h = fallback_font.get_height()
+                if surface.get_height() > target_h:
+                    scale = target_h / surface.get_height()
+                    new_w = max(1, int(surface.get_width() * scale))
+                    surface = pygame.transform.smoothscale(surface, (new_w, target_h))
+                return surface
             except Exception:
                 pass
         return fallback_font.render(fallback_text, True, color)

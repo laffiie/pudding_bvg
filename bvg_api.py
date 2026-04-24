@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 # API Konstanten
 API_BASE_URL = "https://v6.bvg.transport.rest"
-API_TIMEOUT = 10  # Sekunden
+API_TIMEOUT = 7  # Sekunden
 DEFAULT_RESULTS = 20  # Anzahl Ergebnisse pro Anfrage
 DEFAULT_DURATION = 60  # Minuten Zeitfenster
 

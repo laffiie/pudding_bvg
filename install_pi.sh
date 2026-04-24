@@ -38,7 +38,7 @@ sudo apt-get install -y \
     fonts-liberation \
     fonts-dejavu \
     fonts-noto \
-    Environment=SDL_VIDEODRIVER=kmsdrm    fonts-noto-color-emoji \
+    fonts-noto-color-emoji \
     unclutter
 
 # Install Python packages
@@ -63,42 +63,41 @@ fi
 echo "👤 Adding user to video group..."
 sudo usermod -a -G video $USER
 
-# Create systemd service
-echo "⚙️  Creating systemd service..."
-# Get the actual username (more reliable than $USER)
+# Create systemd user service (inherits Wayland session automatically)
+echo "⚙️  Creating systemd user service..."
 ACTUAL_USER=$(whoami)
 ACTUAL_HOME=$(eval echo ~$ACTUAL_USER)
 ACTUAL_PWD=$PWD
 ACTUAL_UID=$(id -u $ACTUAL_USER)
 
-SERVICE_FILE="/etc/systemd/system/bvg-display.service"
-sudo tee $SERVICE_FILE > /dev/null <<EOF
+SERVICE_DIR="$ACTUAL_HOME/.config/systemd/user"
+mkdir -p "$SERVICE_DIR"
+SERVICE_FILE="$SERVICE_DIR/bvg-display.service"
+tee $SERVICE_FILE > /dev/null <<EOF
 [Unit]
 Description=BVG Abfahrtsmonitor
-After=network-online.target
+After=network-online.target graphical-session.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=$ACTUAL_USER
-SupplementaryGroups=video
 WorkingDirectory=$ACTUAL_PWD
-Environment=SDL_VIDEODRIVER=wayland
-Environment=WAYLAND_DISPLAY=wayland-1
-Environment=XDG_RUNTIME_DIR=/run/user/$ACTUAL_UID
 ExecStart=$ACTUAL_PWD/.venv/bin/python3 $ACTUAL_PWD/main.py $ACTUAL_PWD/config/config.json
 Restart=always
 RestartSec=10
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
 EOF
 
-echo "✅ Service created for user: $ACTUAL_USER"
-echo "   Working directory: $ACTUAL_PWD"
+# Enable linger so user services start at boot without login
+sudo loginctl enable-linger $ACTUAL_USER
 
-# Reload systemd
-sudo systemctl daemon-reload
+# Reload user systemd
+systemctl --user daemon-reload
+
+echo "✅ User service created: $SERVICE_FILE"
+echo "   Working directory: $ACTUAL_PWD"
 
 echo ""
 echo "✅ Installation complete!"
@@ -106,9 +105,9 @@ echo ""
 echo "Next steps:"
 echo "1. Edit config: nano ./config/config.json"
 echo "2. Test manually: ./.venv/bin/python3 main.py ./config/config.json"
-echo "3. Enable auto-start: sudo systemctl enable bvg-display.service"
-echo "4. Start service: sudo systemctl start bvg-display.service"
-echo "5. Check status: sudo systemctl status bvg-display.service"
+echo "3. Enable auto-start: systemctl --user enable bvg-display.service"
+echo "4. Start service: systemctl --user start bvg-display.service"
+echo "5. Check status: systemctl --user status bvg-display.service"
 echo ""
 echo "Optional: Disable screen blanking"
 echo "  For Desktop OS: See README_PI.md"

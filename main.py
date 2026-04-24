@@ -114,7 +114,8 @@ class AbfahrtMonitor:
             
             try:
                 departures = self.bvg_client.get_departures(station_id)
-                disruptions = self.bvg_client.get_disruptions(station_id)
+                # Überspringe Störungen wenn API nicht erreichbar (spart Timeout-Zeit)
+                disruptions = self.bvg_client.get_disruptions(station_id) if departures else []
                 
                 if self.config.get('testMode', False):
                     if i == 0:  # Erste Station
